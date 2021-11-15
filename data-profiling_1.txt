@@ -1,0 +1,783 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # **OPEN LIBRARY CASE STUDY**
+
+# In[76]:
+
+
+#import the essential libraries
+import pandas as pd
+#set the option to display all the columns
+pd.set_option("display.max.columns", None)
+pd.set_option('display.max_rows', 1000)
+
+
+# In[212]:
+
+
+#read the json file as a pandas dataframe
+library_df = pd.read_json('data.json', lines=True)
+
+
+# In[213]:
+
+
+#check datset columns and rows count
+library_df.shape
+
+
+# In[878]:
+
+
+#list the columns of dataframe with basic info
+library_df.info()
+
+
+# In[77]:
+
+
+#check for the percentage of Null values in each column
+Null_perc=library_df.isnull().mean().mul(100).sort_values(ascending=False)
+print(Null_perc)
+
+
+# In[879]:
+
+
+#print the df and familiarize the data
+library_df.head(20)
+
+
+# In[21]:
+
+
+#remove spaces from dataset
+library_df.columns = library_df.columns.str.strip()
+
+
+# In[880]:
+
+
+#check different set of datasets
+library_df.type.str["key"].unique()
+
+
+# In[889]:
+
+
+#check counts  of each dataset
+library_df.groupby(library_df.type.str["key"]).size() 
+
+
+# In[892]:
+
+
+#check whats in redirect
+library_df[library_df.type.str["key"]=='/type/redirect']
+
+
+# In[893]:
+
+
+#check whats in delete
+library_df[library_df.type.str["key"]=='/type/delete']
+
+
+# # **Creation of Authors Dataframe Begins**
+
+# In[898]:
+
+
+#create authors dataframe
+authors_df=library_df[library_df.type.str["key"]=='/type/author']
+
+
+# In[899]:
+
+
+#print authors dataframe
+authors_df.head()
+
+
+# In[900]:
+
+
+# authors dataframe size
+authors_df.shape
+
+
+# In[229]:
+
+
+#check if duplicates in authors dataframe
+authors_df[authors_df.duplicated('key')].sort_values(by=['key'])
+
+
+# In[902]:
+
+
+#create authors duplicate count
+authors_df[authors_df.duplicated('key')].sort_values(by=['key']).shape
+
+
+# In[901]:
+
+
+#check for sample duplicate
+authors_df[authors_df.key=='/authors/OL2308766A']
+
+
+# In[903]:
+
+
+#drop duplicates based on revision number
+authors_df=authors_df.sort_values('revision', ascending=False).drop_duplicates('key').sort_index()
+
+
+# In[904]:
+
+
+#check counts after dropping duplicates
+authors_df.shape
+
+
+# In[905]:
+
+
+#create new authors dataframe with selected column
+authors_df=authors_df[["key","name","personal_name","alternate_names","uris","bio","location","birth_date","death_date","links"]].reset_index(drop=True)
+
+
+# In[906]:
+
+
+#print new authors dataframe
+authors_df.head()
+
+
+# In[907]:
+
+
+#check for Nulls in authors dataframe
+authors_df.isnull().mean().mul(100).sort_values(ascending=False)
+
+
+# In[1103]:
+
+
+#create authors dataframe with selected fields
+authors_df=authors_df[["key","name","personal_name"]].reset_index(drop=True)
+
+
+# # **Creation of Works Dataframe Begins**
+
+# In[1107]:
+
+
+#create works dataframe and check count
+
+works_df=library_df[library_df.type.str["key"]=='/type/work']
+works_df.shape
+
+
+# In[934]:
+
+
+#check number of duplicates
+works_df[works_df.duplicated('key')].sort_values(by=['key']).shape
+
+
+# In[1108]:
+
+
+#remove duplicates and check count
+works_df=works_df.sort_values('revision', ascending=False).drop_duplicates('key').sort_index()
+works_df.shape
+
+
+# In[937]:
+
+
+#create new works dataframe with selected columns
+works_df=works_df[["key","title","subtitle","authors","subjects","subject_places","subject_times","subject_people","description","dewey_number","lc_classifications","first_sentence","other_titles","first_publish_date","links","notes","covers"]]
+
+
+# In[938]:
+
+
+#check Nulls in works dataframe
+works_df.isnull().mean().mul(100).sort_values(ascending=False)
+
+
+# In[939]:
+
+
+#print new works dataframe with selected columns
+works_df.head()
+
+
+# In[964]:
+
+
+#create new works dataframe after eliminating columns
+works_df=works_df[["key","title","subtitle","authors"]].reset_index(drop=True)
+
+
+# In[967]:
+
+
+#explode author columns
+works_df=works_df.explode("authors")
+
+
+# In[968]:
+
+
+#create author_key column,9c v
+works_df["author_key"]=works_df.authors.str["author"].str["key"]
+
+
+# In[970]:
+
+
+#new works dataframe 
+works_df.head()
+
+
+# In[971]:
+
+
+#new works dataframe count
+works_df.shape
+
+
+# In[972]:
+
+
+#check duplicated values in new works dataframe 
+works_df[works_df.duplicated('key')]
+
+
+# In[973]:
+
+
+#check sample duplicated record in new works dataframe 
+works_df[works_df.key=='/works/OL16631323W']
+
+
+# In[974]:
+
+
+#drop authors column
+works_df=works_df.drop("authors",1)
+
+
+# In[975]:
+
+
+#new works dataframe 
+works_df.head()
+
+
+# # **Creation of Edition Dataframe Begins**
+
+# In[ ]:
+
+
+#Created edition dataframe
+editions_df=library_df[library_df.type.str["key"]=='/type/edition']
+
+
+# In[981]:
+
+
+#count of edition dataframe
+editions_df.shape
+
+
+# In[982]:
+
+
+#check for duplicates
+editions_df[editions_df.duplicated('key')].shape
+
+
+# In[983]:
+
+
+#remove duplicates
+editions_df=editions_df.sort_values('revision', ascending=False).drop_duplicates('key').sort_index()
+
+
+# In[984]:
+
+
+#new dataframe count
+editions_df.shape
+
+
+# In[985]:
+
+
+#new dataframe dispaly
+editions_df.head()
+
+
+# In[986]:
+
+
+#drop the unwanted columns
+editions_df=editions_df.drop(['latest_revision', 'revision','type'], axis=1)
+
+
+# In[987]:
+
+
+#check for null counts
+editions_df.isnull().mean().mul(100).sort_values(ascending=False)
+
+
+# In[995]:
+
+
+#create new df with selected columns
+editions_df=editions_df[["key","title","works","authors","languages","created","publish_date","number_of_pages","subtitle","genres"]]
+
+
+# In[996]:
+
+
+#display new df
+editions_df.head()
+
+
+# In[997]:
+
+
+#display new df info
+editions_df.info()
+
+
+# In[998]:
+
+
+#explode df with works
+editions_df=editions_df.explode("works")
+
+
+# In[999]:
+
+
+#check count after that
+editions_df.shape
+
+
+# In[1000]:
+
+
+#create work_key column
+editions_df["works_key"]=editions_df.works.str["key"]
+
+
+# In[1001]:
+
+
+#explode df with authors
+editions_df=editions_df.explode("authors")
+
+
+# In[1002]:
+
+
+#check count after that
+editions_df.shape
+
+
+# In[1003]:
+
+
+#display new df
+editions_df.head()
+
+
+# In[1004]:
+
+
+#create new author column
+editions_df["authors_key"]=editions_df.authors.str["key"]
+
+
+# In[1005]:
+
+
+#display new df
+editions_df.head()
+
+
+# In[1006]:
+
+
+#explode languages
+editions_df=editions_df.explode("languages")
+
+
+# In[1007]:
+
+
+#display new df count
+editions_df.shape
+
+
+# In[1008]:
+
+
+#load laguage code
+editions_df["language_code"]=editions_df.languages.str["key"].str[-3:]
+
+
+# In[1010]:
+
+
+#display new df 
+
+editions_df.head()
+
+
+# In[1011]:
+
+
+#display new column
+
+editions_df["created_timestamp"]=editions_df.created.str["value"]
+
+
+# In[468]:
+
+
+#display new df count
+
+editions_df.shape
+
+
+# In[469]:
+
+
+#display new df 
+
+editions_df.head()
+
+
+# In[1012]:
+
+
+#display unique dates
+
+editions_df.publish_date.unique().tolist()
+
+
+# In[1013]:
+
+
+#display unique dates after extracting last 4 columns
+editions_df.publish_date.str[-4:].unique().tolist()
+
+
+# In[1021]:
+
+
+#create new column publish year after cleasing
+
+import numpy as np
+editions_df["publish_year"]=editions_df.publish_date.str[-4:].str.replace(r'\D', '').replace('',np.nan).astype(float)
+
+
+# In[1022]:
+
+
+#check for invalid year
+editions_df[editions_df.publish_year==16]
+
+
+# In[1023]:
+
+
+#drop columns
+editions_df=editions_df.drop(['works', 'authors','languages','created'], axis=1)
+
+
+# In[1025]:
+
+
+#display new df count
+editions_df.shape
+
+
+# In[1026]:
+
+
+#display new df
+editions_df.head()
+
+
+# In[1027]:
+
+
+#explode genres
+editions_df=editions_df.explode("genres")
+
+
+# In[1028]:
+
+
+#display new df count
+editions_df.shape
+
+
+# In[1029]:
+
+
+#check unique genre values
+editions_df.genres.unique()
+
+
+# In[1034]:
+
+
+#display count of unique genres
+editions_df.genres.unique().shape
+
+
+# In[1037]:
+
+
+#remove dots from genres
+editions_df["genres"]=editions_df["genres"].str.rstrip(".")
+
+
+# In[1038]:
+
+
+#display count of unique genres
+editions_df.genres.unique().shape
+
+
+# In[1047]:
+
+
+#display unique genres
+editions_df.genres.unique()
+
+
+# In[ ]:
+
+
+#create new column genres_grp fixing the issues
+
+editions_df['genres_grp'] = editions_df['genres'].apply(lambda x: "Juvenile" if any(y in x for y in ["Juvenile","juvenil","Juvenil","juvenile","Children's","children's","children","Children"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Census" if any(y in x for y in ["Census","census"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Biography" if any(y in x for y in ["Biography","biography","Biografía","biografía","Bigraphy","Biographhy","Biographies","Biogaphy","Biograpny","Biograpy"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Translations" if any(y in x for y in ["Translations","translations"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Personal narratives" if any(y in x for y in ["Personal narratives","personal narratives","Personal narrative","personal narrative","Personal Narrative"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Examinations,Problems,Exercises,etc." if any(y in x for y in ["Problems","Exercises","Examinations","examinations","Problem","Exercise","exercises","examination","Examination"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Drama" if any(y in x for y in ["Drama","drama"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Fiction" if any(y in x for y in ["Fiction","fiction","Ficción","Fictiion","Ficcioń"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Congresses" if any(y in x for y in ["Congresses","congresses","Congressess","congresses","Congrès"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Dictionaries, Glossaries & Encyclopedias" if any(y in x for y in ["Dictionaries","dictionaries","Dictionnaires","Encyclopedia","Encyclopedias","encyclopedias","encyclopedia","Glossaries","glossaries"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Handbooks, manuals,etc" if any(y in x for y in ["Handbooks","Manuals","manuals","handbooks"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "History" if any(y in x for y in ["History","history","Historia"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Catalogs" if any(y in x for y in ["Catalogs","catalogs","Catalog","catalog"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Works before 20th century" if any(y in x for y in ["Early works","early works"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Citas, maximas, etc" if any(y in x for y in ["Citas", "maximas", "máximas","mx̀imas"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Nomenclature" if any(y in x for y in ["Nomenclature", "nomenclature"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Guidebooks" if any(y in x for y in ["Guidebooks", "guidebooks","Guidebook","guidebook"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Literature" if any(y in x for y in ["LITERATURE", "Literature","Literatures","literatures","literature","Literary"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Interviews" if any(y in x for y in ["Intervews", "Interviews","interviews","interviews","interview"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Bibliography" if any(y in x for y in ["Bibliography", "Bibliographies","bibliography","bibliographies","interview"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Letters" if any(y in x for y in ["Letters", "letters","LETTER","LETTERS","letter","Letter"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Music" if any(y in x for y in ["Music", "Musics","music","musics"])  else x)
+editions_df['genres_grp'] = editions_df['genres_grp'].apply(lambda x: "Comics" if any(y in x for y in ["Comics", "Comic","comics","comic"])  else x)
+
+
+# In[1078]:
+
+
+#display count of unique genres
+editions_df.genres_grp.unique().shape
+
+
+# In[1079]:
+
+
+#display unique genres
+editions_df.genres_grp.unique()
+
+
+# # **Data cleansing by removing columns which are Nulls for title,number of pages and publish_year**
+
+# In[1080]:
+
+
+#drop rows with Null values for columns mentioned
+editions_df=editions_df.dropna(subset = ['title','number_of_pages','publish_year'])
+
+
+# In[1081]:
+
+
+#drop rows with pages <=20
+editions_df=editions_df[editions_df.number_of_pages>20]
+
+
+# In[1082]:
+
+
+#drop rows with publish year <=1950
+
+editions_df = editions_df[(editions_df['publish_year'] > 1950) & (editions_df['publish_year'] <= 2021)]
+
+
+# In[1083]:
+
+
+#display count
+editions_df.shape
+
+
+# In[1084]:
+
+
+#resent index of df
+editions_df=editions_df.reset_index(drop=True)
+
+
+# In[1085]:
+
+
+#display df
+editions_df.head()
+
+
+# # **Get the book with the most pages**
+# 
+
+# In[1086]:
+
+
+#Get the book with the most pages. 
+editions_df.sort_values(by=['number_of_pages'],ascending=False).head(1)
+
+
+# # **Find the top 5 genres with most books**
+# 
+
+# In[1087]:
+
+
+#Find the top 5 genres with most books
+editions_df[editions_df.genres_grp !=''].groupby('genres_grp')['key'].nunique().sort_values(ascending=False)[0:5]
+
+
+# # **Retrieve the top 5 authors who (co-)authored the most books**
+# 
+
+# In[1094]:
+
+
+#create co author dataframe
+
+co_authors_df=editions_df.groupby('key').filter(lambda x: len(x['authors_key'].unique()) > 1)
+co_authors_df.shape
+
+
+# In[1095]:
+
+
+#validate the dataframe
+authors_df[authors_df['key']=='/books/OL8018028M']
+
+
+# In[1119]:
+
+
+editions_df[editions_df['authors_key']=='/authors/OL3246797A']
+
+
+# In[1096]:
+
+
+#print the top 5
+co_authors_df.groupby('authors_key')['key'].nunique().sort_values(ascending=False)[0:5]
+
+
+# # **Per publish year, get the number of authors that published at least one book**
+# 
+
+# In[1090]:
+
+
+#Per publish year, get the number of authors that published at least one book
+Non_null_authors_df=editions_df.dropna(subset = ['authors_key'])
+Non_null_authors_df.groupby('publish_year')['authors_key'].nunique()
+
+
+# In[1093]:
+
+
+Non_null_authors_df.groupby('publish_year')['authors_key'].nunique().plot.bar()
+
+
+# # **Find the number of authors and number of books published per month for years between 1950 and 1970**
+# 
+
+# In[1097]:
+
+
+#Find the number of authors and number of books published per month for years between 1950 and 1970
+editions_1950_1970_df = editions_df[editions_df['publish_year'] < 1970]
+
+
+# In[1098]:
+
+
+#create a non null authors subset
+editions_1950_1970_df_authors=editions_1950_1970_df.dropna(subset = ['authors_key'])
+
+
+# In[1099]:
+
+
+#get the aggrgate of authors
+editions_1950_1970_df_authors = (editions_1950_1970_df_authors.groupby(['publish_year'])
+         .agg({'authors_key': 'nunique'})
+      ) 
+
+
+# In[1113]:
+
+
+#get the average
+print(round(editions_1950_1970_df_authors/12))
+
+
+# In[1101]:
+
+
+#get the aggrgate of books
+agg_books_1970 = (editions_1950_1970_df.groupby(['publish_year'])
+         .agg({'key': 'nunique'})
+      ) 
+
+
+# In[1102]:
+
+
+#get the average
+print(round(agg_books_1970/12))
+
+
+# In[ ]:
+
+
+
+
